@@ -29,10 +29,13 @@ namespace Xamarin.Essentials
                 {
                     case NetworkConnectivityLevel.LocalAccess:
                         return NetworkAccess.Local;
+
                     case NetworkConnectivityLevel.InternetAccess:
                         return NetworkAccess.Internet;
+
                     case NetworkConnectivityLevel.ConstrainedInternetAccess:
                         return NetworkAccess.ConstrainedInternet;
+
                     default:
                         return NetworkAccess.None;
                 }
@@ -43,8 +46,19 @@ namespace Xamarin.Essentials
         {
             get
             {
-                var networkInterfaceList = NetworkInformation.GetConnectionProfiles();
-                foreach (var interfaceInfo in networkInterfaceList.Where(nii => nii.GetNetworkConnectivityLevel() != NetworkConnectivityLevel.None))
+                IEnumerable<Windows.Networking.Connectivity.ConnectionProfile> interfaces = new List<Windows.Networking.Connectivity.ConnectionProfile>();
+                try
+                {
+                    var networkInterfaceList = NetworkInformation.GetConnectionProfiles();
+                    interfaces = networkInterfaceList.Where(nii =>
+                        nii.GetNetworkConnectivityLevel() != NetworkConnectivityLevel.None);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
+
+                foreach (var interfaceInfo in interfaces)
                 {
                     var type = ConnectionProfile.Unknown;
 
@@ -60,9 +74,11 @@ namespace Xamarin.Essentials
                             case 6:
                                 type = ConnectionProfile.Ethernet;
                                 break;
+
                             case 71:
                                 type = ConnectionProfile.WiFi;
                                 break;
+
                             case 243:
                             case 244:
                                 type = ConnectionProfile.Cellular;
