@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Xamarin.Essentials
@@ -45,8 +46,15 @@ namespace Xamarin.Essentials
 
         static void SetCurrent()
         {
-            currentAccess = NetworkAccess;
-            currentProfiles = new List<ConnectionProfile>(ConnectionProfiles);
+            try
+            {
+                currentAccess = NetworkAccess;
+                currentProfiles = new List<ConnectionProfile>(ConnectionProfiles);
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+            }
         }
 
         static void OnConnectivityChanged(NetworkAccess access, IEnumerable<ConnectionProfile> profiles)
@@ -57,10 +65,17 @@ namespace Xamarin.Essentials
 
         static void OnConnectivityChanged(ConnectivityChangedEventArgs e)
         {
-            if (currentAccess != e.NetworkAccess || !currentProfiles.SequenceEqual(e.ConnectionProfiles))
+            try
             {
+                if (currentAccess == e.NetworkAccess && currentProfiles.SequenceEqual(e.ConnectionProfiles))
+                    return;
+
                 SetCurrent();
                 MainThread.BeginInvokeOnMainThread(() => ConnectivityChangedInternal?.Invoke(null, e));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
             }
         }
     }
